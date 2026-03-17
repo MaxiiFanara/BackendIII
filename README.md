@@ -72,3 +72,54 @@ docker build -t maxifana/adoptme:latest .
 |----------|-------------|
 | `PORT` | Puerto del servidor (default: `3000`) |
 | `MONGODB_URI` | URI de conexión a MongoDB |
+
+---
+
+## Alternativa: MongoDB Atlas (base de datos en la nube)
+
+### Lo que NO necesitás hacer
+
+- No necesitás instalar MongoDB en tu computadora
+- No necesitás configurar `bindIp` en `mongod.conf`
+- No necesitás `--network host`
+
+### Lo único que cambia es la URI
+
+En lugar de:
+```
+mongodb://127.0.0.1:27017/adoptme
+```
+
+Usás la URI de Atlas que se ve así:
+```
+mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster0.xxxxx.mongodb.net/adoptme
+```
+
+### Cómo obtener la URI de Atlas
+
+1. Entrá a [https://cloud.mongodb.com](https://cloud.mongodb.com)
+2. Seleccioná tu cluster
+3. Click en **Connect**
+4. Click en **Drivers**
+5. Copiá la URI que aparece y reemplazá `<password>` con tu contraseña
+
+### Comando para correr el contenedor con Atlas
+```bash
+docker run -d \
+  --name adoptme-container \
+  -p 3000:3000 \
+  -e MONGODB_URI="mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster0.xxxxx.mongodb.net/adoptme" \
+  -e PORT=3000 \
+  maxifana/adoptme:latest
+```
+
+> Con Atlas usás `-p 3000:3000` en lugar de `--network host` porque la base de datos está en la nube y no en tu máquina local.
+
+### Importante: habilitar tu IP en Atlas
+
+Atlas por defecto bloquea todas las IPs. Antes de correr el contenedor:
+
+1. En Atlas → **Network Access**
+2. Click en **Add IP Address**
+3. Click en **Allow Access from Anywhere** (para testing)
+4. Click en **Confirm**
