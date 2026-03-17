@@ -1,0 +1,273 @@
+paths:
+  /api/adoptions:
+    get:
+      summary: Obtiene todas las adopciones registradas
+      description: >
+        Retorna el listado completo de adopciones registradas en la base de datos,
+        con los campos owner y pet populados con sus datos completos.
+      tags:
+        - Adoptions
+      responses:
+        "200":
+          description: Lista de adopciones obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Adoption"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/adoptions/{aid}:
+    get:
+      summary: Obtiene una adopción por su ID
+      description: Busca y retorna una adopción específica a partir de su MongoDB ObjectId.
+      tags:
+        - Adoptions
+      parameters:
+        - name: aid
+          in: path
+          required: true
+          description: ID de la adopción (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345c
+      responses:
+        "200":
+          description: Adopción encontrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: "#/components/schemas/Adoption"
+        "400":
+          description: El formato del ID proporcionado no es un ObjectId válido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: "Formato de ID inválido para el parámetro: aid"
+        "404":
+          description: No existe una adopción con el ID proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: Adopción no encontrada
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/adoptions/{uid}/{pid}:
+    post:
+      summary: Registra la adopción de una mascota por un usuario
+      description: >
+        Procesa el flujo completo de adopción: verifica que el usuario y la mascota
+        existan, que la mascota no tenga dueño, asigna la mascota al usuario,
+        actualiza el campo owner de la mascota y crea el registro de adopción.
+      tags:
+        - Adoptions
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          description: ID del usuario adoptante (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345a
+        - name: pid
+          in: path
+          required: true
+          description: ID de la mascota a adoptar (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345b
+      responses:
+        "201":
+          description: Adopción registrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Mascota adoptada correctamente
+                  payload:
+                    $ref: "#/components/schemas/Adoption"
+        "400":
+          description: Formato de ID inválido o la mascota ya tiene dueño
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                idInvalido:
+                  summary: Formato de ID inválido
+                  value:
+                    status: error
+                    message: "Formato de ID inválido para el parámetro: uid"
+                mascotaConDuenio:
+                  summary: La mascota ya fue adoptada
+                  value:
+                    status: error
+                    message: La mascota ya tiene dueño
+        "404":
+          description: Usuario o mascota no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                usuarioNoEncontrado:
+                  summary: Usuario no existe
+                  value:
+                    status: error
+                    message: Usuario no encontrado
+                mascotaNoEncontrada:
+                  summary: Mascota no existe
+                  value:
+                    status: error
+                    message: Mascota no encontrada
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Adoption:
+      type: object
+      description: Representa el registro de una adopción entre un usuario y una mascota.
+      properties:
+        _id:
+          type: string
+          description: ID autogenerado por MongoDB
+          example: 64a1b2c3d4e5f6789012345c
+        owner:
+          description: Usuario que realizó la adopción (populado desde MongoDB)
+          $ref: "#/components/schemas/AdoptionOwner"
+        pet:
+          description: Mascota adoptada (populada desde MongoDB)
+          $ref: "#/components/schemas/AdoptionPet"
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha en que se realizó la adopción
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de última actualización del registro
+      example:
+        _id: 64a1b2c3d4e5f6789012345c
+        owner:
+          _id: 64a1b2c3d4e5f6789012345a
+          first_name: Juan
+          last_name: Pérez
+          email: juan@example.com
+        pet:
+          _id: 64a1b2c3d4e5f6789012345b
+          name: Firulais
+          specie: dog
+          owner: 64a1b2c3d4e5f6789012345a
+
+    AdoptionOwner:
+      type: object
+      description: Datos del usuario adoptante (populado).
+      properties:
+        _id:
+          type: string
+          example: 64a1b2c3d4e5f6789012345a
+        first_name:
+          type: string
+          example: Juan
+        last_name:
+          type: string
+          example: Pérez
+        email:
+          type: string
+          example: juan@example.com
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          example: user
+      example:
+        _id: 64a1b2c3d4e5f6789012345a
+        first_name: Juan
+        last_name: Pérez
+        email: juan@example.com
+        role: user
+
+    AdoptionPet:
+      type: object
+      description: Datos de la mascota adoptada (populada).
+      properties:
+        _id:
+          type: string
+          example: 64a1b2c3d4e5f6789012345b
+        name:
+          type: string
+          example: Firulais
+        specie:
+          type: string
+          enum:
+            - dog
+            - cat
+            - bird
+            - fish
+            - rabbit
+            - hamster
+          example: dog
+        owner:
+          type: string
+          description: ID del usuario propietario (asignado tras la adopción)
+          example: 64a1b2c3d4e5f6789012345a
+      example:
+        _id: 64a1b2c3d4e5f6789012345b
+        name: Firulais
+        specie: dog
+        owner: 64a1b2c3d4e5f6789012345a
+
+    ErrorResponse:
+      type: object
+      description: Estructura estándar de respuesta de error.
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Descripción del error ocurrido
+      example:
+        status: error
+        message: Descripción del error ocurrido

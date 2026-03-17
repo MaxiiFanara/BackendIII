@@ -1,0 +1,336 @@
+paths:
+  /api/pets:
+    get:
+      summary: Obtiene todas las mascotas
+      description: Retorna el listado completo de mascotas registradas en la base de datos, con el campo owner populado.
+      tags:
+        - Pets
+      responses:
+        "200":
+          description: Lista de mascotas obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Pet"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: Crea una nueva mascota
+      description: Registra una nueva mascota en la plataforma. La mascota se crea sin dueño (owner null).
+      tags:
+        - Pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/requestBodies/PetCreate"
+      responses:
+        "201":
+          description: Mascota creada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: "#/components/schemas/Pet"
+        "400":
+          description: Faltan campos obligatorios
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: Todos los campos son obligatorios
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/pets/{pid}:
+    get:
+      summary: Obtiene una mascota por su ID
+      description: Busca y retorna una mascota específica a partir de su MongoDB ObjectId.
+      tags:
+        - Pets
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          description: ID de la mascota (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345b
+      responses:
+        "200":
+          description: Mascota encontrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: "#/components/schemas/Pet"
+        "400":
+          description: El formato del ID proporcionado no es un ObjectId válido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: "Formato de ID inválido para el parámetro: pid"
+        "404":
+          description: No existe una mascota con el ID proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: Mascota no encontrada
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Actualiza una mascota por su ID
+      description: Actualiza los datos de una mascota existente. Solo se modifican los campos enviados en el body.
+      tags:
+        - Pets
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          description: ID de la mascota (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345b
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/requestBodies/PetUpdate"
+      responses:
+        "200":
+          description: Mascota actualizada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: "#/components/schemas/Pet"
+        "400":
+          description: El formato del ID proporcionado no es un ObjectId válido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: "Formato de ID inválido para el parámetro: pid"
+        "404":
+          description: No existe una mascota con el ID proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: Mascota no encontrada
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Elimina una mascota por su ID
+      description: >
+        Elimina de forma permanente la mascota con el ID especificado.
+        Nota: eliminar una mascota que ya tiene dueño no elimina la referencia
+        en el usuario propietario ni en las adopciones asociadas.
+      tags:
+        - Pets
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          description: ID de la mascota (MongoDB ObjectId)
+          schema:
+            type: string
+            example: 64a1b2c3d4e5f6789012345b
+      responses:
+        "200":
+          description: Mascota eliminada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Mascota eliminada correctamente
+        "400":
+          description: El formato del ID proporcionado no es un ObjectId válido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: "Formato de ID inválido para el parámetro: pid"
+        "404":
+          description: No existe una mascota con el ID proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: error
+                message: Mascota no encontrada
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Pet:
+      type: object
+      description: Representa una mascota registrada en la plataforma.
+      properties:
+        _id:
+          type: string
+          description: ID autogenerado por MongoDB
+          example: 64a1b2c3d4e5f6789012345b
+        name:
+          type: string
+          description: Nombre de la mascota
+          example: Firulais
+        specie:
+          type: string
+          description: Especie de la mascota
+          enum:
+            - dog
+            - cat
+            - bird
+            - fish
+            - rabbit
+            - hamster
+          example: dog
+        owner:
+          description: Usuario propietario. null si la mascota no tiene dueño.
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha de creación del registro
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de última actualización del registro
+      example:
+        _id: 64a1b2c3d4e5f6789012345b
+        name: Firulais
+        specie: dog
+        owner: null
+
+    ErrorResponse:
+      type: object
+      description: Estructura estándar de respuesta de error.
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Descripción del error ocurrido
+      example:
+        status: error
+        message: Descripción del error ocurrido
+
+  requestBodies:
+    PetCreate:
+      type: object
+      required:
+        - name
+        - specie
+      description: Datos necesarios para registrar una nueva mascota.
+      properties:
+        name:
+          type: string
+          description: Nombre de la mascota
+          example: Firulais
+        specie:
+          type: string
+          description: Especie de la mascota
+          enum:
+            - dog
+            - cat
+            - bird
+            - fish
+            - rabbit
+            - hamster
+          example: dog
+      example:
+        name: Firulais
+        specie: dog
+
+    PetUpdate:
+      type: object
+      description: Datos para actualizar una mascota. Todos los campos son opcionales.
+      properties:
+        name:
+          type: string
+          description: Nombre de la mascota
+          example: Firulais
+        specie:
+          type: string
+          description: Especie de la mascota
+          enum:
+            - dog
+            - cat
+            - bird
+            - fish
+            - rabbit
+            - hamster
+          example: cat
+      example:
+        name: Firulais
+        specie: cat

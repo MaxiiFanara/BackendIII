@@ -1,0 +1,33 @@
+# Dependencias locales
+node_modules/
+
+# Variables de entorno (nunca al contenedor)
+.env
+.env.*
+!.env.example
+
+# Control de versiones
+.git/
+.gitignore
+
+# Tests y coverage
+test/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Documentación de desarrollo
+README.md
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
